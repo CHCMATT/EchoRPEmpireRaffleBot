@@ -1,0 +1,6 @@
+.env
+package.json
+package-lock.json
+sheets-creds.json
+/node_modules
+.DS_Store
