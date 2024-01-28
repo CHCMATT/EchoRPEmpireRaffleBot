@@ -23,6 +23,7 @@ function strCleanup(str) {
 };
 
 module.exports.modalSubmit = async (interaction) => {
+	await interaction.deferReply({ ephemeral: true });
 	try {
 		var modalID = interaction.customId;
 		switch (modalID) {
@@ -47,14 +48,14 @@ module.exports.modalSubmit = async (interaction) => {
 				});
 
 				if (isNaN(citizenId)) { // validate citizen id
-					await interaction.reply({
+					await interaction.editReply({
 						content: `:exclamation: \`${interaction.fields.getTextInputValue('citizenIdInput')}\` is not a valid number, please be sure to only enter numbers.`,
 						ephemeral: true
 					});
 					return;
 				}
 				if (isNaN(numTickets)) { // validate quantity of tickets
-					await interaction.reply({
+					await interaction.editReply({
 						content: `:exclamation: \`${interaction.fields.getTextInputValue('ticketQuantityInput')}\` is not a valid number, please be sure to only enter numbers.`,
 						ephemeral: true
 					});
@@ -94,13 +95,13 @@ module.exports.modalSubmit = async (interaction) => {
 				}
 
 				if (numTickets > 30) {	// alert if this purchase is more than 30 tickets.  
-					await interaction.reply({ content: `:exclamation: Unable to add sale of \`${numTickets}\` tickets to \`${buyerName} (${citizenId})\` as the limit is 30 tickets per person.`, ephemeral: true });
+					await interaction.editReply({ content: `:exclamation: Unable to add sale of \`${numTickets}\` tickets to \`${buyerName} (${citizenId})\` as the limit is 30 tickets per person.`, ephemeral: true });
 					return;
 				} else if (currTixAmt == 30) { // alert if the person already has the 30 tickets.  
-					await interaction.reply({ content: `:exclamation: Unable to add sale of \`${numTickets}\` tickets to \`${buyerName} (${citizenId})\` as they have already purchased \`${currTixAmt}\` tickets, so this would put them over the limit. They are not able to purchase any more tickets.`, ephemeral: true });
+					await interaction.editReply({ content: `:exclamation: Unable to add sale of \`${numTickets}\` tickets to \`${buyerName} (${citizenId})\` as they have already purchased \`${currTixAmt}\` tickets, so this would put them over the limit. They are not able to purchase any more tickets.`, ephemeral: true });
 					return;
 				} else if ((currTixAmt + numTickets) > 30) { // alert if the person has less than 30 but this would put them over the limit.
-					await interaction.reply({ content: `:exclamation: Unable to add sale of \`${numTickets}\` tickets to \`${buyerName} (${citizenId})\` as they have already purchased \`${currTixAmt}\` tickets, so this would put them over the limit. The maximum number of tickets they can purchase now is: \`${30 - currTixAmt}\`.`, ephemeral: true });
+					await interaction.editReply({ content: `:exclamation: Unable to add sale of \`${numTickets}\` tickets to \`${buyerName} (${citizenId})\` as they have already purchased \`${currTixAmt}\` tickets, so this would put them over the limit. The maximum number of tickets they can purchase now is: \`${30 - currTixAmt}\`.`, ephemeral: true });
 					return;
 				} else {
 
@@ -124,7 +125,7 @@ module.exports.modalSubmit = async (interaction) => {
 						.setColor('1EC276');
 					await interaction.client.channels.cache.get(process.env.COMMISSION_LOGS_CHANNEL_ID).send({ embeds: [notificationEmbed] });
 
-					await interaction.reply({ content: `Successfully added \`${numTickets}\` tickets for \`${buyerName}\` to the \`Mesa XL\` raffle.\n\nDetails about this sale:\n> Individual Ticket Price: \`${formattedIndivTicketPrice}\`\n> Total Sale Price: \`${formattedThisSalePrice}\`\n> Your Commission: \`${formattedSalespersonCommission}\`\n\nYour overall commission from this raffle is now: \`${totalCommission}\`.`, ephemeral: true });
+					await interaction.editReply({ content: `Successfully added \`${numTickets}\` tickets for \`${buyerName}\` to the \`Mesa XL\` raffle.\n\nDetails about this sale:\n> Individual Ticket Price: \`${formattedIndivTicketPrice}\`\n> Total Sale Price: \`${formattedThisSalePrice}\`\n> Your Commission: \`${formattedSalespersonCommission}\`\n\nYour overall commission from this raffle is now: \`${totalCommission}\`.`, ephemeral: true });
 				}
 				break;
 			case 'removeTicketsModal':
@@ -147,14 +148,14 @@ module.exports.modalSubmit = async (interaction) => {
 				});
 
 				if (isNaN(citizenId)) { // validate citizen id
-					await interaction.reply({
+					await interaction.editReply({
 						content: `:exclamation: \`${interaction.fields.getTextInputValue('citizenIdInput')}\` is not a valid number, please be sure to only enter numbers.`,
 						ephemeral: true
 					});
 					return;
 				}
 				if (isNaN(numTickets)) { // validate quantity of tickets
-					await interaction.reply({
+					await interaction.editReply({
 						content: `:exclamation: \`${interaction.fields.getTextInputValue('ticketQuantityInput')}\` is not a valid number, please be sure to only enter numbers.`,
 						ephemeral: true
 					});
@@ -163,14 +164,14 @@ module.exports.modalSubmit = async (interaction) => {
 
 				var ticketData = await dbCmds.readTickets(citizenId);
 				if (ticketData == null) {
-					await interaction.reply({
+					await interaction.editReply({
 						content: `:exclamation: \`${buyerName}\` does not have any tickets, please check to make sure you're removing from the correct person.`,
 						ephemeral: true
 					});
 					return;
 				} else if (ticketData.ticketsBought < numTickets) {
 					var ticketsCount = ticketData.ticketsBought
-					await interaction.reply({
+					await interaction.editReply({
 						content: `:exclamation: \`${buyerName}\` has \`${ticketsCount}\` tickets, please check to make sure you're removing from the correct person.`,
 						ephemeral: true
 					});
@@ -221,19 +222,55 @@ module.exports.modalSubmit = async (interaction) => {
 						.setColor('1EC276');
 					await interaction.client.channels.cache.get(process.env.COMMISSION_LOGS_CHANNEL_ID).send({ embeds: [notificationEmbed] });
 
-					await interaction.reply({ content: `Successfully removed \`${numTickets}\` tickets for \`${buyerName}\` from the \`Mesa XL\` raffle.\n\nDetails about this sale:\n> Individual Ticket Price: \`-${formattedIndivTicketPrice}\`\n> Total Sale Price: \`-${formattedThisSalePrice}\`\n> Your Commission: \`-${formattedSalespersonCommission}\`\n\nYour overall commission from this raffle is now: \`${totalCommission}\`.`, ephemeral: true });
+					await interaction.editReply({ content: `Successfully removed \`${numTickets}\` tickets for \`${buyerName}\` from the \`Mesa XL\` raffle.\n\nDetails about this sale:\n> Individual Ticket Price: \`-${formattedIndivTicketPrice}\`\n> Total Sale Price: \`-${formattedThisSalePrice}\`\n> Your Commission: \`-${formattedSalespersonCommission}\`\n\nYour overall commission from this raffle is now: \`${totalCommission}\`.`, ephemeral: true });
 				}
 				break;
 			default:
-				await interaction.reply({
+				await interaction.editReply({
 					content: `I'm not familiar with this modal type. Please tag @CHCMATT to fix this issue.`,
 					ephemeral: true
 				});
 				console.log(`Error: Unrecognized modal ID: ${interaction.customId}`);
 		}
 	} catch (error) {
-		console.log(`Error in modal popup!`);
-		console.error(error);
+		if (process.env.BOT_NAME == 'test') {
+			let errTime = moment().format('MMMM Do YYYY, h:mm:ss a');
+			let fileParts = __filename.split(/[\\/]/);
+			let fileName = fileParts[fileParts.length - 1];
+
+			console.error(errTime, fileName, error);
+		} else {
+			let errTime = moment().format('MMMM Do YYYY, h:mm:ss a');
+			let fileParts = __filename.split(/[\\/]/);
+			let fileName = fileParts[fileParts.length - 1];
+			console.error(errTime, fileName, error);
+
+			console.log(`An error occured at ${errTime} at file ${fileName} and was created by ${interaction.member.nickname} (${interaction.member.user.username}).`);
+
+			let errString = error.toString();
+			let errHandled = false;
+
+			if (errString === 'Error: The service is currently unavailable.' || errString === 'Error: Internal error encountered.' || errString === 'HTTPError: Service Unavailable') {
+				try {
+					await interaction.editReply({ content: `:warning: One of the service providers we use had a brief outage. Please try to submit your request again!`, ephemeral: true });
+				} catch {
+					await interaction.reply({ content: `:warning: One of the service providers we use had a brief outage. Please try to submit your request again!`, ephemeral: true });
+				}
+				errHandled = true;
+			}
+
+			let errorEmbed = [new EmbedBuilder()
+				.setTitle(`An error occured on the ${process.env.BOT_NAME} bot file ${fileName}!`)
+				.setDescription(`\`\`\`${errString}\`\`\``)
+				.addFields(
+					{ name: `Created by:`, value: `${interaction.member.nickname} (<@${interaction.user.id}>)`, inline: true },
+					{ name: `Error handled?`, value: `${errHandled}`, inline: true },
+				)
+				.setColor('B80600')
+				.setFooter({ text: `${errTime}` })];
+
+			await interaction.client.channels.cache.get(process.env.ERROR_LOG_CHANNEL_ID).send({ embeds: errorEmbed });
+		}
 	}
 };
 
